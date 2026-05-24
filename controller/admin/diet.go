@@ -146,7 +146,6 @@ func EditDietForClient(c *gin.Context) {
 	timeNow := time.Now()
 	if err := db.Table("diet_histories").Where("id = ? and diet_type = ? and client_id = ?", schedule.DietID, schedule.DietType, clientID).Updates(map[string]interface{}{
 		"diet_string": schedule.Diet,
-		"date":        timeNow,
 		"updated_at":  timeNow,
 	}).Error; err != nil {
 		fmt.Errorf("error: SaveDietForClient | could not save diet for diet_history_id %d for client_id %s | err: %v", schedule.Diet, c.Param("client_id"), err.Error())

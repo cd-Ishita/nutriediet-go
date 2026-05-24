@@ -22,7 +22,7 @@ func GetDietTemplatesList(c *gin.Context) {
 	db := database.DB
 
 	dietTemplates := []model.DietTemplate{}
-	err := db.Where("deleted_at IS NULL").Select("id", "name").Find(&dietTemplates).Error
+	err := db.Where("deleted_at IS NULL").Select("id", "name").Order("name ASC").Find(&dietTemplates).Error
 	if err != nil {
 		fmt.Errorf("error: could not fetch diet templates for GetDietTemplatesList API | err: %v", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})
