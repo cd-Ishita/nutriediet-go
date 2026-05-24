@@ -163,10 +163,32 @@ func UpdateClientInfo(c *gin.Context) {
 func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Client, isSuperAdmin bool) model.Client {
 	// TODO: do we want admin to be able to update the starting weight in cases where client comes back
 
-	if isSuperAdmin {
-		if _, exists := constants.PackageDayMap[updatedInfo.Package]; exists && updatedInfo.Package != "" {
+	if updatedInfo.Package != "" {
+		if _, ok := constants.PackageDurationDays(updatedInfo.Package); ok {
 			existingInfo.Package = updatedInfo.Package
 		}
+	}
+	if updatedInfo.LastPaymentDate != nil {
+		existingInfo.LastPaymentDate = updatedInfo.LastPaymentDate
+	}
+	if updatedInfo.DateOfJoining != nil {
+		existingInfo.DateOfJoining = updatedInfo.DateOfJoining
+	}
+	if updatedInfo.NextPaymentDate != nil {
+		existingInfo.NextPaymentDate = updatedInfo.NextPaymentDate
+	} else if packageDays, ok := constants.PackageDurationDays(existingInfo.Package); ok {
+		startDate := existingInfo.LastPaymentDate
+		if startDate == nil {
+			startDate = existingInfo.DateOfJoining
+		}
+		if startDate != nil &&
+			(updatedInfo.LastPaymentDate != nil || updatedInfo.DateOfJoining != nil || updatedInfo.Package != "") {
+			nextPaymentDate := startDate.AddDate(0, 0, packageDays)
+			existingInfo.NextPaymentDate = &nextPaymentDate
+		}
+	}
+
+	if isSuperAdmin {
 		if updatedInfo.TotalAmount != 0 {
 			existingInfo.TotalAmount = updatedInfo.TotalAmount
 		}
@@ -174,26 +196,6 @@ func migrateClientInfoForAdmin(updatedInfo model.Client, existingInfo model.Clie
 			existingInfo.AmountPaid = updatedInfo.AmountPaid
 		}
 		existingInfo.AmountDue = existingInfo.TotalAmount - existingInfo.AmountPaid
-
-		// Update lastPaymentDate if provided
-		if updatedInfo.LastPaymentDate != nil {
-			existingInfo.LastPaymentDate = updatedInfo.LastPaymentDate
-			// Only calculate the next payment date if not explicitly provided
-			if updatedInfo.NextPaymentDate == nil && existingInfo.Package != "" {
-				nextPaymentDate := existingInfo.LastPaymentDate.AddDate(0, 0, constants.PackageDayMap[existingInfo.Package])
-				existingInfo.NextPaymentDate = &nextPaymentDate
-			}
-		}
-
-		// Update nextPaymentDate if explicitly provided
-		if updatedInfo.NextPaymentDate != nil {
-			existingInfo.NextPaymentDate = updatedInfo.NextPaymentDate
-		}
-
-		// Update DateOfJoining if provided
-		if updatedInfo.DateOfJoining != nil {
-			existingInfo.DateOfJoining = updatedInfo.DateOfJoining
-		}
 	}
 
 	if updatedInfo.Name != "" {
