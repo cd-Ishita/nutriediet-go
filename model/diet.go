@@ -111,6 +111,7 @@ type DietHistoryResponse struct {
 	Feedback         string  `gorm:"column:feedback" json:"feedback,omitempty"`
 	Tags             string  `gorm:"column:tags" json:"tags,omitempty"`
 	DietType         uint32  `gorm:"column:diet_type" json:"diet_type,omitempty"`
+	DietTemplateID   uint    `gorm:"column:diet_template_id" json:"diet_template_id,omitempty"`
 	DietTemplateName string  `gorm:"column:diet_template_name" json:"name,omitempty"`
 
 	CreatedAt *time.Time `gorm:"column:created_at" json:"created_at"`
