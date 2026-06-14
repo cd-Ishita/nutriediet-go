@@ -153,15 +153,6 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	// Validate password strength before creating user
-	if err := helpers.ValidatePasswordStrength(user.Password); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":        err.Error(),
-			"requirements": helpers.GetPasswordRequirements(),
-		})
-		return
-	}
-
 	err := database.DB.Create(&user).Error
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err.Error()})

@@ -23,7 +23,7 @@ type ForgotPasswordRequest struct {
 type ResetPasswordRequest struct {
 	Email       string `json:"email" binding:"required,email"`
 	OTP         string `json:"otp" binding:"required,len=6"`
-	NewPassword string `json:"new_password" binding:"required,min=12"`
+	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
 
 // ForgotPassword handles the forgot password request
@@ -213,15 +213,6 @@ func ResetPassword(c *gin.Context) {
 		remainingAttempts := passwordOTP.MaxAttempts - passwordOTP.Attempts - 1
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": fmt.Sprintf("Invalid OTP provided. %d attempts remaining.", remainingAttempts),
-		})
-		return
-	}
-
-	// Validate password strength
-	if err := helpers.ValidatePasswordStrength(req.NewPassword); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":        err.Error(),
-			"requirements": helpers.GetPasswordRequirements(),
 		})
 		return
 	}
