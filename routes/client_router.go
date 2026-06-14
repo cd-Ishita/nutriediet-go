@@ -43,10 +43,10 @@ func UserRoutes(incomingRoutes gin.IRouter) {
 	protected.GET("/clients/:client_id/profile_created", clientController.HasClientCreatedProfile)
 
 	// CLIENT - RECIPE
-	protected.GET("clients/:client_id/recipe", clientController.GetRecipeImageForClients)
+	protected.GET("/clients/:client_id/recipe", clientController.GetRecipeImageForClients)
 
 	// CLIENT - MOTIVATION
-	protected.GET("clients/:client_id/motivation", clientController.GetActiveMotivationsForClients)
+	protected.GET("/clients/:client_id/motivation", clientController.GetActiveMotivationsForClients)
 
 	// EMAIL-BASED PROFILE CREATION (Separate from client routes to avoid conflicts)
 	protected.POST("/users/:email/create_profile", clientController.CreateProfileByClient)
