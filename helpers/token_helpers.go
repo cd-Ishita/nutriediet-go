@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	
+
 	"github.com/cd-Ishita/nutriediet-go/database"
 	jwt "github.com/golang-jwt/jwt/v5"
 	"strconv"
@@ -30,19 +30,19 @@ func initJWTSecret() {
 	if jwtInitialized {
 		return
 	}
-	
+
 	SECRET_KEY = os.Getenv("JWT_SECRET_KEY")
-	
+
 	// Validate JWT secret key exists
 	if SECRET_KEY == "" {
 		log.Fatal("❌ JWT_SECRET_KEY environment variable is required. Generate one with: openssl rand -base64 64")
 	}
-	
+
 	// Validate minimum length (256 bits = 32 bytes minimum)
 	if len(SECRET_KEY) < 32 {
 		log.Fatal("❌ JWT_SECRET_KEY must be at least 32 characters long for security")
 	}
-	
+
 	jwtInitialized = true
 	log.Println("✅ JWT Secret Key loaded successfully")
 }
@@ -50,9 +50,15 @@ func initJWTSecret() {
 func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (string, string, error) {
 	// Initialize JWT secret on first use
 	initJWTSecret()
-	
-	// Access token - valid for 15 minutes
-	// This is the token used for API requests, does not need user logins every 15 minutes
+
+	accessTTL := 15 * time.Minute
+	refreshTTL := 90 * 24 * time.Hour
+	if userType == "ADMIN" {
+		// Waiting-room display stays logged in for clinic hours; avoid 15-minute dropouts.
+		accessTTL = 180 * 24 * time.Hour
+		refreshTTL = 180 * 24 * time.Hour
+	}
+
 	claims := &SignedDetails{
 		Email:     email,
 		FirstName: firstName,
@@ -60,17 +66,16 @@ func GenerateAllTokens(email, firstName, lastName, userType string, id uint64) (
 		UserType:  userType,
 		UserID:    strconv.FormatUint(id, 10),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
-	// Refresh token - valid for 3 months (90 days)
 	refreshClaims := &SignedDetails{
 		Email:  email,
 		UserID: strconv.FormatUint(id, 10),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(90 * 24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTTL)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
@@ -104,7 +109,7 @@ func UpdateTokens(token, refreshToken string, id uint64) error {
 func ValidateToken(token string) (SignedDetails, error) {
 	// Initialize JWT secret on first use
 	initJWTSecret()
-	
+
 	res, err := jwt.ParseWithClaims(token, &SignedDetails{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SECRET_KEY), nil
 	})
@@ -125,6 +130,6 @@ func ValidateToken(token string) (SignedDetails, error) {
 	if claims.ExpiresAt.Before(time.Now()) {
 		return SignedDetails{}, errors.New("token has expired")
 	}
-	
+
 	return *claims, nil
 }

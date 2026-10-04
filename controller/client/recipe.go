@@ -13,6 +13,7 @@ func GetRecipesForClient(c *gin.Context) {
 	clientEmail := c.GetString("email")
 	clientID := c.Param("client_id")
 
+	// Authentication check
 	isAllowed, isActive := middleware.ClientAuthentication(clientEmail, clientID)
 	if !isAllowed {
 		c.JSON(http.StatusUnauthorized, gin.H{

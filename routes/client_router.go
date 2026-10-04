@@ -89,6 +89,11 @@ func UserRoutes(incomingRoutes gin.IRouter) {
 	protected.POST("/admin/recipes/:recipe_id", adminController.UpdateRecipeByID)
 	protected.POST("/admin/recipes/:recipe_id/delete", adminController.DeleteRecipeByID)
 
+	// ADMIN - WAITING ROOM DISPLAY
+	protected.GET("/display/status", adminController.GetDisplayStatus)
+	protected.POST("/display/status", adminController.UpdateDisplayStatus)
+	protected.GET("/display/stream", adminController.StreamDisplayStatus)
+
 	// ADMIN - EXERCISES
 	protected.GET("/admin/exercises", adminController.GetListOfExercises)
 	protected.GET("/admin/exercise/:exercise_id", adminController.GetExerciseByID)

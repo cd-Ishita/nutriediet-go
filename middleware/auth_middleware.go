@@ -16,23 +16,27 @@ import (
 )
 
 func Authenticate(c *gin.Context) {
+	clientToken := ""
 	authHeader := c.Request.Header.Get("Authorization")
-	if authHeader == "" {
+	if authHeader != "" {
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			fmt.Println("invalid authorization header format")
+			c.JSON(http.StatusBadRequest, gin.H{"err": "invalid token format"})
+			c.Abort()
+			return
+		}
+		clientToken = parts[1]
+	} else if queryToken := c.Query("token"); queryToken != "" {
+		// EventSource cannot set Authorization headers; allow token query for SSE.
+		clientToken = queryToken
+	} else {
 		fmt.Println("no authorization header received")
 		c.JSON(http.StatusBadRequest, gin.H{"err": "no token received"})
 		c.Abort()
 		return
 	}
 
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		fmt.Println("invalid authorization header format")
-		c.JSON(http.StatusBadRequest, gin.H{"err": "invalid token format"})
-		c.Abort()
-		return
-	}
-
-	clientToken := parts[1]
 	claims, err := helpers.ValidateToken(clientToken)
 	if err != nil {
 		fmt.Println("error validating the token")
